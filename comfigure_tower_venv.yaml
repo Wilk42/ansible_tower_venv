@@ -4,7 +4,7 @@
   gather_facts: false
   tasks:
     - name: include play vars
-      include_vars: tasks/vars/tower_info_lab.yaml
+      include_vars: tower_info.yaml
 
     - name: ensure python version installed
       yum:
