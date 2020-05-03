@@ -1,0 +1,16 @@
+python_venv_dir: "/opt/cust_venv"
+python_venv_environments:
+  - name: "python_3_6_ansible_2_9_6"
+    pip_name: "ansible"
+    ansible_version: "2.9.6"
+    python_version: "python3.6"
+    python_version_proper: "rh-python36"
+
+
+python_modules_ansible:
+# - name: sample
+#   purpose: "For what function is this pyhton module needed to be installed on Towers"
+#   version: 2.1.8  
+  - name: ansible-tower-cli
+
+
