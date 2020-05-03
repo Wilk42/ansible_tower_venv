@@ -1,0 +1,72 @@
+# Restart tower services
+- name: Configure tower venv
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: include play vars
+      include_vars: tasks/vars/tower_info_lab.yaml
+
+    - name: ensure python version installed
+      yum:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - "{{item.python_version_proper}}"
+        - "{{item.python_version_proper}}-python-tools" 
+        - "{{item.python_version_proper}}-python-devel" 
+        - "gcc"  
+        - "libselinux-python3"
+      with_items: 
+        - "{{ python_venv_environments }}"         
+
+    - name: Create a venv dir
+      file:
+        path: "{{python_venv_dir}}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+      when: python_venv_environments is defined 
+
+    - name: Create new venv python3
+      shell: |
+        scl enable rh-python36 '{{item.python_version}} -m venv {{python_venv_dir}}/{{item.name}}'
+      with_items: 
+        - "{{ python_venv_environments }}"        
+      when: python_venv_environments is defined  
+
+    - name: Create a symbolic link for selinux
+      file:
+        src: "/usr/lib64/{{item.python_version}}/site-packages/selinux/"
+        dest: "{{python_venv_dir}}/{{item.name}}/lib/{{item.python_version}}/site-packages/selinux"
+        owner: root
+        group: root
+        state: link
+      with_items: 
+        - "{{ python_venv_environments }}"     
+
+    - name: Install ansible into python venvs packages
+      pip:
+        name: "{{item.pip_name}}"
+        virtualenv: "{{python_venv_dir}}/{{item.name}}"
+        state: "{{ item.state|default('present') }}"
+        version: "{{item.ansible_version}}"
+        virtualenv_site_packages: yes
+      with_items: 
+        - "{{ python_venv_environments }}" 
+      when: python_venv_environments is defined  
+
+    - name: Install additional python venvs packages
+      pip:
+        name: "{{item[1].name}}"
+        virtualenv: "{{python_venv_dir}}/{{item[0].name}}"
+        state: "{{ item[1].state|default('present') }}"
+        version: "{{item[1].version|default(omit)}}"
+        virtualenv_site_packages: yes
+      with_nested: 
+        - "{{ python_venv_environments }}"
+        - "{{ python_modules_ansible }}"    
+      when: python_venv_environments is defined  
+      ignore_errors: true      
+    
+
